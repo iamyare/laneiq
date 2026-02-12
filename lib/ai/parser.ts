@@ -6,14 +6,20 @@ import type { CoachingReport } from "@/lib/types/metrics";
 export function parseCoachingReport(raw: string): CoachingReport {
   // Strip markdown code fences if present
   let jsonStr = raw.trim();
-  if (jsonStr.startsWith("```json")) {
-    jsonStr = jsonStr.slice(7);
+  const match = jsonStr.match(/```json\s*([\s\S]*?)\s*```/);
+  if (match) {
+    jsonStr = match[1];
   } else if (jsonStr.startsWith("```")) {
-    jsonStr = jsonStr.slice(3);
+    jsonStr = jsonStr.replace(/^```\w*\s*/, "").replace(/\s*```$/, "");
   }
-  if (jsonStr.endsWith("```")) {
-    jsonStr = jsonStr.slice(0, -3);
+
+  // Attempt to find JSON object bounds if it contains other text
+  const firstBrace = jsonStr.indexOf("{");
+  const lastBrace = jsonStr.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
   }
+
   jsonStr = jsonStr.trim();
 
   try {

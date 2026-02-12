@@ -104,5 +104,5 @@ export function buildUserPrompt(featurePackJson: string): string {
 ${featurePackJson}
 \`\`\`
 
-Respond with valid JSON only, matching the output schema described in your instructions.`;
+Respond with valid JSON only, matching the output schema described in your instructions. Do not include any conversational text, markdown formatting, or preamble. Just the raw JSON object.`;
 }

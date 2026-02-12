@@ -32,6 +32,7 @@ export async function analyzeMatch(
       systemInstruction: systemPrompt,
       temperature: 0.3,
       maxOutputTokens: 4096,
+      responseMimeType: "application/json",
     },
   });
 
@@ -86,6 +87,7 @@ Weight your advice toward patterns, not outliers.`;
       systemInstruction: systemPrompt,
       temperature: 0.3,
       maxOutputTokens: 6144,
+      responseMimeType: "application/json",
     },
   });
 
