@@ -32,7 +32,9 @@ import {
   Crosshair,
   Sparkles,
   CheckCircle2,
+  Download,
 } from "lucide-react";
+import { generateMatchMarkdown } from "@/lib/utils/export-match";
 
 interface MatchPageProps {
   params: Promise<{
@@ -93,6 +95,20 @@ export default function MatchPage({ params }: MatchPageProps) {
     );
   };
 
+  const handleExport = () => {
+    if (!matchData) return;
+    const md = generateMatchMarkdown(matchData, report);
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `match-${matchId}-analysis.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const match = matchData?.match;
   const participant = matchData?.participant;
   const metrics = matchData?.metrics;
@@ -116,6 +132,17 @@ export default function MatchPage({ params }: MatchPageProps) {
             <span className="font-medium text-sm">{decodedName}#{decodedTag}</span>
             <span className="text-muted-foreground text-xs ml-2">Match Detail</span>
           </div>
+          {matchData && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              className="gap-2 bg-white/5 border-white/10 hover:bg-white/10"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export Analysis</span>
+            </Button>
+          )}
         </div>
       </header>
 
