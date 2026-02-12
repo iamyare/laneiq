@@ -330,9 +330,9 @@ export default function MatchPage({ params }: MatchPageProps) {
                 <CardTitle className="text-sm font-medium">Scoreboard</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <TeamScoreboard team={blueTeam} label="Blue Team" color="blue" highlightPuuid={puuid || ""} />
+                <TeamScoreboard team={blueTeam} label="Blue Team" color="blue" highlightPuuid={puuid || ""} platformId={platformId} />
                 <Separator className="bg-white/5" />
-                <TeamScoreboard team={redTeam} label="Red Team" color="red" highlightPuuid={puuid || ""} />
+                <TeamScoreboard team={redTeam} label="Red Team" color="red" highlightPuuid={puuid || ""} platformId={platformId} />
               </CardContent>
             </Card>
 
@@ -443,33 +443,53 @@ function MetricCard({ label, value, icon }: { label: string; value: string; icon
   );
 }
 
-function TeamScoreboard({ team, label, color, highlightPuuid }: { team: Participant[]; label: string; color: "blue" | "red"; highlightPuuid: string }) {
+function TeamScoreboard({ team, label, color, highlightPuuid, platformId }: { team: Participant[]; label: string; color: "blue" | "red"; highlightPuuid: string; platformId: string }) {
   return (
     <div>
       <h4 className={`text-xs font-medium mb-2 ${color === "blue" ? "text-blue-400" : "text-red-400"}`}>
         {label} {team[0]?.win ? "— Victory" : "— Defeat"}
       </h4>
       <div className="space-y-1">
-        {team.map((p) => (
-          <div key={p.puuid} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs ${p.puuid === highlightPuuid ? "bg-amber-500/10 border border-amber-500/20" : "bg-white/2"}`}>
-            <ChampionIcon championName={p.championName} size={28} />
-            <div className="flex-1 min-w-0">
-              <span className="font-medium truncate block text-[11px]">{p.riotIdGameName || p.championName}</span>
-              <span className="text-[10px] text-muted-foreground">{ROLE_LABELS[p.individualPosition || p.teamPosition] || ""}</span>
+        {team.map((p) => {
+          const profileUrl = p.riotIdGameName && p.riotIdTagline 
+            ? `/${platformId}/${encodeURIComponent(p.riotIdGameName)}/${encodeURIComponent(p.riotIdTagline)}`
+            : null;
+
+          const content = (
+            <>
+              <ChampionIcon championName={p.championName} size={28} />
+              <div className="flex-1 min-w-0">
+                <span className="font-medium truncate block text-[11px]">{p.riotIdGameName || p.championName}</span>
+                <span className="text-[10px] text-muted-foreground">{ROLE_LABELS[p.individualPosition || p.teamPosition] || ""}</span>
+              </div>
+              <KDADisplay kills={p.kills} deaths={p.deaths} assists={p.assists} showRatio={false} />
+              <div className="hidden sm:flex items-center gap-3 text-[11px] text-muted-foreground">
+                <span>{p.totalMinionsKilled + p.neutralMinionsKilled} CS</span>
+                <span>{p.visionScore} Vis</span>
+                <span>{(p.totalDamageDealtToChampions / 1000).toFixed(1)}k dmg</span>
+              </div>
+              <div className="hidden md:flex gap-0.5">
+                {[p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].map((id, i) => (
+                  <ItemIcon key={i} itemId={id} size={20} />
+                ))}
+              </div>
+            </>
+          );
+
+          return profileUrl ? (
+            <Link 
+              key={p.puuid} 
+              href={profileUrl}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs transition-colors hover:bg-white/10 ${p.puuid === highlightPuuid ? "bg-amber-500/10 border border-amber-500/20" : "bg-white/2"}`}
+            >
+              {content}
+            </Link>
+          ) : (
+            <div key={p.puuid} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs ${p.puuid === highlightPuuid ? "bg-amber-500/10 border border-amber-500/20" : "bg-white/2"}`}>
+              {content}
             </div>
-            <KDADisplay kills={p.kills} deaths={p.deaths} assists={p.assists} showRatio={false} />
-            <div className="hidden sm:flex items-center gap-3 text-[11px] text-muted-foreground">
-              <span>{p.totalMinionsKilled + p.neutralMinionsKilled} CS</span>
-              <span>{p.visionScore} Vis</span>
-              <span>{(p.totalDamageDealtToChampions / 1000).toFixed(1)}k dmg</span>
-            </div>
-            <div className="hidden md:flex gap-0.5">
-              {[p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].map((id, i) => (
-                <ItemIcon key={i} itemId={id} size={20} />
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
