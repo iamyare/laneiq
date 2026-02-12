@@ -1,11 +1,10 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSummoner } from "@/lib/hooks/use-summoner";
-import { useMatches } from "@/lib/hooks/use-matches";
-import { fetchMatchDetail } from "@/lib/actions/match";
+import { useMatches, useMatchDetailsBatch } from "@/lib/hooks/use-matches";
 import { SearchForm } from "@/components/search-form";
 import { RankBadge } from "@/components/rank-badge";
 import { MatchCard } from "@/components/match-card";
@@ -15,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getProfileIconUrl, QUEUE_TYPES } from "@/lib/constants/regions";
 import type { PlatformId } from "@/lib/constants/regions";
-import type { MatchDto, Participant } from "@/lib/types/riot";
+import type { Participant } from "@/lib/types/riot";
 import { ArrowLeft, Loader2, ChevronDown, AlertCircle } from "lucide-react";
 
 interface ProfilePageProps {
@@ -54,53 +53,14 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     queueFilter !== "all" ? parseInt(queueFilter) : undefined
   );
 
-  // Fetch match details for each match ID
-  const [matchDetails, setMatchDetails] = useState<Map<string, { match: MatchDto; participant: Participant }>>(new Map());
-  const [loadingDetails, setLoadingDetails] = useState<Set<string>>(new Set());
-
   const allMatchIds = matchPages?.pages.flatMap((p) => p.matchIds) ?? [];
 
-  useEffect(() => {
-    if (!profile?.account.puuid) return;
-
-    const newIds = allMatchIds.filter(
-      (id) => !matchDetails.has(id) && !loadingDetails.has(id)
-    );
-    if (newIds.length === 0) return;
-
-    setLoadingDetails((prev) => {
-      const next = new Set(prev);
-      newIds.forEach((id) => next.add(id));
-      return next;
-    });
-
-    // Fetch details for new IDs using server action
-    const fetchDetails = async () => {
-      for (const matchId of newIds) {
-        try {
-          const data = await fetchMatchDetail(matchId, platformId, profile.account.puuid, false);
-          setMatchDetails((prev) => {
-            const next = new Map(prev);
-            next.set(matchId, {
-              match: data.match,
-              participant: data.participant,
-            });
-            return next;
-          });
-        } catch {
-          // Skip failed fetches
-        }
-        setLoadingDetails((prev) => {
-          const next = new Set(prev);
-          next.delete(matchId);
-          return next;
-        });
-      }
-    };
-
-    fetchDetails();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allMatchIds.length, profile?.account.puuid]);
+  // Fetch match details through React Query — cached, deduplicated, rate-limit-friendly
+  const { details: matchDetails, isLoading: detailsLoading } = useMatchDetailsBatch(
+    allMatchIds,
+    platformId,
+    profile?.account.puuid ?? null,
+  );
 
   const soloQueue = profile?.leagues.find(
     (l) => l.queueType === "RANKED_SOLO_5x5"
@@ -112,7 +72,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="border-b border-white/5 bg-white/[0.02] backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-white/5 bg-white/2 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-4">
           <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-5 w-5" />
@@ -226,7 +186,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           </div>
 
           {/* Match list */}
-          {matchesLoading && (
+          {(matchesLoading || (detailsLoading && allMatchIds.length === 0)) && (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-16 w-full rounded-xl" />
@@ -286,3 +246,4 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     </div>
   );
 }
+
