@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Roboto_Flex, JetBrains_Mono } from 'next/font/google';
 import { QueryProvider } from "@/lib/providers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LegalFooter } from "@/components/legal-footer";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const roboto_flex = Roboto_Flex({
+  subsets: ['latin'],
+  weight: ['700'],
+  variable: '--display-family',
 });
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const jetbrains_mono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--body-family',
 });
 
 export const metadata: Metadata = {
@@ -28,9 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className={`${roboto_flex.variable} ${jetbrains_mono.variable} dark`} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`antialiased min-h-screen flex flex-col font-body`}
       >
         <QueryProvider>
           <TooltipProvider>
