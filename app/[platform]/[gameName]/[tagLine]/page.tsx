@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSummoner } from "@/lib/hooks/use-summoner";
 import { useMatches } from "@/lib/hooks/use-matches";
+import { fetchMatchDetail } from "@/lib/actions/match";
 import { SearchForm } from "@/components/search-form";
 import { RankBadge } from "@/components/rank-badge";
 import { MatchCard } from "@/components/match-card";
@@ -49,7 +50,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   } = useMatches(
     profile?.account.puuid ?? null,
     platformId,
-    20,
+    5,
     queueFilter !== "all" ? parseInt(queueFilter) : undefined
   );
 
@@ -73,27 +74,19 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       return next;
     });
 
-    // Fetch details for new IDs (sequentially to respect rate limits)
+    // Fetch details for new IDs using server action
     const fetchDetails = async () => {
       for (const matchId of newIds) {
         try {
-          const params = new URLSearchParams({
-            platform: platformId,
-            puuid: profile.account.puuid,
-            timeline: "false",
-          });
-          const res = await fetch(`/api/match/${matchId}?${params}`);
-          if (res.ok) {
-            const data = await res.json();
-            setMatchDetails((prev) => {
-              const next = new Map(prev);
-              next.set(matchId, {
-                match: data.match,
-                participant: data.participant,
-              });
-              return next;
+          const data = await fetchMatchDetail(matchId, platformId, profile.account.puuid, false);
+          setMatchDetails((prev) => {
+            const next = new Map(prev);
+            next.set(matchId, {
+              match: data.match,
+              participant: data.participant,
             });
-          }
+            return next;
+          });
         } catch {
           // Skip failed fetches
         }

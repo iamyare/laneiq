@@ -10,11 +10,11 @@ export type RiotAccount = z.infer<typeof RiotAccountSchema>;
 
 // ─── Summoner-V4 ───
 export const SummonerSchema = z.object({
-  id: z.string(),
-  accountId: z.string(),
+  id: z.string().default(""),
+  accountId: z.string().default(""),
   puuid: z.string(),
   profileIconId: z.number(),
-  revisionDate: z.number(),
+  revisionDate: z.number().default(0),
   summonerLevel: z.number(),
 });
 export type Summoner = z.infer<typeof SummonerSchema>;

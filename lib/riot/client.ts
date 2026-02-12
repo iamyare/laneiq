@@ -116,6 +116,15 @@ export async function getLeagueEntries(
   return riotFetch(url, z.array(LeagueEntrySchema), platformId);
 }
 
+export async function getLeagueEntriesByPuuid(
+  puuid: string,
+  platformId: PlatformId,
+): Promise<LeagueEntry[]> {
+  const host = getPlatformHost(platformId);
+  const url = `${host}/lol/league/v4/entries/by-puuid/${puuid}`;
+  return riotFetch(url, z.array(LeagueEntrySchema), platformId);
+}
+
 // ─── Match-V5 (Regional host) ───
 export interface MatchListOptions {
   start?: number;

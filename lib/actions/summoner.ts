@@ -1,9 +1,9 @@
 "use server";
 
-import { getAccountByRiotId, getSummonerByPuuid, getLeagueEntries, RiotApiError } from "@/lib/riot/client";
+import { getAccountByRiotId, getSummonerByPuuid, getLeagueEntries, getLeagueEntriesByPuuid, RiotApiError } from "@/lib/riot/client";
 import type { PlatformId } from "@/lib/constants/regions";
 import { PLATFORM_MAP } from "@/lib/constants/regions";
-import type { SummonerProfile } from "@/lib/types/riot";
+import type { SummonerProfile, LeagueEntry } from "@/lib/types/riot";
 
 export async function fetchSummonerProfile(
   gameName: string,
@@ -26,7 +26,22 @@ export async function fetchSummonerProfile(
     const summoner = await getSummonerByPuuid(account.puuid, platform);
 
     // Step 3: Get league entries (ranked info)
-    const leagues = await getLeagueEntries(summoner.id, platform);
+    // Try by summoner ID first, fallback to PUUID-based endpoint
+    let leagues: LeagueEntry[] = [];
+    try {
+      if (summoner.id) {
+        leagues = await getLeagueEntries(summoner.id, platform);
+      } else {
+        leagues = await getLeagueEntriesByPuuid(account.puuid, platform);
+      }
+    } catch {
+      // League data is non-critical — gracefully degrade
+      try {
+        leagues = await getLeagueEntriesByPuuid(account.puuid, platform);
+      } catch {
+        console.warn("[Action fetchSummonerProfile] Could not fetch league entries");
+      }
+    }
 
     return { account, summoner, leagues };
   } catch (error) {
@@ -43,3 +58,4 @@ export async function fetchSummonerProfile(
     throw new Error("Internal server error");
   }
 }
+
