@@ -17,7 +17,7 @@ vi.mock('@/components/item-icon', () => ({
 }))
 
 vi.mock('@/components/kda-display', () => ({
-  KDADisplay: ({ kills, deaths, assists }: any) => (
+  KDADisplay: ({ kills, deaths, assists }: { kills: number; deaths: number; assists: number }) => (
     <div data-testid="kda-display">{kills}/{deaths}/{assists}</div>
   )
 }))

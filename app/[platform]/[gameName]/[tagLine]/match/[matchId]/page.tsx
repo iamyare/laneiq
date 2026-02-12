@@ -33,8 +33,12 @@ import {
   Sparkles,
   CheckCircle2,
   Download,
+  TrendingUp,
 } from "lucide-react";
 import { generateMatchMarkdown } from "@/lib/utils/export-match";
+import { GoldXPChart } from "@/components/charts/gold-xp-chart";
+import { DamageDistributionChart } from "@/components/charts/damage-distribution";
+import { TimelineEventsChart } from "@/components/charts/timeline-events";
 
 interface MatchPageProps {
   params: Promise<{
@@ -169,11 +173,10 @@ export default function MatchPage({ params }: MatchPageProps) {
         {match && participant && metrics && (
           <>
             {/* Match Header */}
-            <div className={`rounded-2xl border p-6 ${
-              participant.win
+            <div className={`rounded-2xl border p-6 ${participant.win
                 ? "border-emerald-500/20 bg-emerald-500/5"
                 : "border-red-500/20 bg-red-500/5"
-            }`}>
+              }`}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
                 <div className="flex items-center gap-4">
                   <ChampionIcon championName={participant.championName} size={64} />
@@ -289,27 +292,25 @@ export default function MatchPage({ params }: MatchPageProps) {
                     {coachingTags.map((tag) => (
                       <div
                         key={tag.id}
-                        className={`rounded-lg border p-3 text-sm ${
-                          tag.severity === "critical"
+                        className={`rounded-lg border p-3 text-sm ${tag.severity === "critical"
                             ? "border-red-500/20 bg-red-500/5"
                             : tag.severity === "warning"
-                            ? "border-amber-500/20 bg-amber-500/5"
-                            : tag.severity === "strength"
-                            ? "border-emerald-500/20 bg-emerald-500/5"
-                            : "border-white/10 bg-white/2"
-                        }`}
+                              ? "border-amber-500/20 bg-amber-500/5"
+                              : tag.severity === "strength"
+                                ? "border-emerald-500/20 bg-emerald-500/5"
+                                : "border-white/10 bg-white/2"
+                          }`}
                       >
                         <div className="flex items-center gap-2">
                           <Badge
-                            className={`text-[10px] ${
-                              tag.severity === "critical"
+                            className={`text-[10px] ${tag.severity === "critical"
                                 ? "bg-red-500/20 text-red-400"
                                 : tag.severity === "warning"
-                                ? "bg-amber-500/20 text-amber-400"
-                                : tag.severity === "strength"
-                                ? "bg-emerald-500/20 text-emerald-400"
-                                : "bg-white/10 text-white/60"
-                            }`}
+                                  ? "bg-amber-500/20 text-amber-400"
+                                  : tag.severity === "strength"
+                                    ? "bg-emerald-500/20 text-emerald-400"
+                                    : "bg-white/10 text-white/60"
+                              }`}
                           >
                             {tag.severity}
                           </Badge>
@@ -353,6 +354,57 @@ export default function MatchPage({ params }: MatchPageProps) {
                     Load Timeline Data (for deeper analysis)
                   </Button>
                 )}
+
+                {showTimeline && metrics.timeline && (
+                  <div className="w-full space-y-8 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <div className="lg:col-span-2 space-y-4">
+                        <h4 className="font-semibold text-sm flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-amber-400" />
+                          Gold & XP Lead
+                        </h4>
+                        <div className="rounded-xl border border-white/10 bg-white/2 p-4">
+                          <GoldXPChart
+                            goldDiff={metrics.timeline.goldDiffTimeline}
+                            xpDiff={metrics.timeline.xpDiffTimeline}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-sm flex items-center gap-2">
+                          <Sword className="h-4 w-4 text-red-400" />
+                          Damage Distribution
+                        </h4>
+                        <div className="rounded-xl border border-white/10 bg-white/2 p-4 flex flex-col items-center justify-center">
+                          <DamageDistributionChart
+                            physical={participant.physicalDamageDealtToChampions}
+                            magic={participant.magicDamageDealtToChampions}
+                            trueDamage={participant.trueDamageDealtToChampions}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-sm flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-blue-400" />
+                        Timeline Events
+                      </h4>
+                      <div className="rounded-xl border border-white/10 bg-white/2 p-6 pt-2">
+                        <TimelineEventsChart
+                          duration={match.info.gameDuration}
+                          deaths={metrics.timeline.punishableDeaths}
+                          badBacks={metrics.timeline.badBacks}
+                          dangerZones={metrics.timeline.dangerZoneEntries}
+                        />
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
                 <Button
                   onClick={handleAnalyze}
                   disabled={analyze.isPending}

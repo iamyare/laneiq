@@ -11,10 +11,6 @@ import type {
 // Map coordinates — approximate zones based on Summoner's Rift geometry
 // The map is roughly 15000x15000 units
 const MAP_CENTER = 7500;
-const RIVER_Y_MIN = 5000;
-const RIVER_Y_MAX = 10000;
-const RIVER_X_MIN = 5000;
-const RIVER_X_MAX = 10000;
 
 function isInRiver(x: number, y: number): boolean {
   // River runs diagonally — approximate with a band
